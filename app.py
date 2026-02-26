@@ -94,6 +94,19 @@ def get_git_diff(cwd: str, filepath: str, context: int = 3) -> str:
         return "(error reading diff)"
 
 
+def get_git_branch(cwd: str) -> str:
+    """Return current git branch name."""
+    cwd = os.path.expanduser(cwd)
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            capture_output=True, text=True, timeout=5, cwd=cwd,
+        )
+        return result.stdout.strip() if result.returncode == 0 else ""
+    except Exception:
+        return ""
+
+
 def get_git_status(cwd: str) -> dict:
     """Return git status summary for a project directory."""
     cwd = os.path.expanduser(cwd)
@@ -176,6 +189,7 @@ class Handler(BaseHTTPRequestHandler):
                     running = True
 
                 git = get_git_status(p["cwd"])
+                branch = get_git_branch(p["cwd"])
                 result.append({
                     "id": p["id"],
                     "name": p["name"],
@@ -184,6 +198,7 @@ class Handler(BaseHTTPRequestHandler):
                     "running": running,
                     "running_cmd": running_cmd,
                     "git_changes": git["total"],
+                    "git_branch": branch,
                 })
             return self._json(result)
 
@@ -400,7 +415,11 @@ HTML = r"""<!DOCTYPE html>
   /* Info */
   .info { flex: 1; min-width: 0; }
   .name { font-size: 16px; font-weight: 600; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; }
-  .badge { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 10px;
+  .branch { font-size: 12px; font-weight: 500; padding: 1px 8px; border-radius: 10px;
+    background: #fef3c7; color: #d97706; }
+  [data-theme="dark"] .branch { background: rgba(240,144,0,.15); color: #fbbf24; }
+  .badge { font-size: 11px; font-weight: 600; width: 20px; height: 20px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
     background: #fef3c7; color: #d97706; }
   [data-theme="dark"] .badge { background: rgba(240,144,0,.15); color: #fbbf24; }
   .url  { font-size: 13px; color: var(--dim); margin-top: 3px; text-decoration: none; display: inline-block; transition: color .15s; }
@@ -609,7 +628,7 @@ function render() {
     <div class="card" id="card-${p.id}">
       <div class="dot ${p.running ? 'on' : 'off'}"></div>
       <div class="info">
-        <div class="name">${p.name}${p.git_changes ? `<span class="badge">${p.git_changes}</span>` : ''}</div>
+        <div class="name">${p.name}${p.git_branch ? `<span class="branch"><i class="fa-solid fa-code-branch" style="margin-right:5px;font-size:10px"></i>${p.git_branch}</span>` : ''}</div>
         ${p.port ? `<a class="url" href="http://localhost:${p.port}/web" target="_blank" onclick="event.stopPropagation()">localhost:${p.port}</a>` : ''}
       </div>
       <div class="actions">
