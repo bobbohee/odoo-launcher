@@ -1,0 +1,15 @@
+[
+  {
+    "id": "my-odoo",
+    "name": "My Odoo",
+    "port": 8069,
+    "cwd": "/path/to/odoo-project",
+    "python": "/path/to/.pyenv/versions/my-env/bin/python",
+    "logfile": "config/log/odooserver.log",
+    "commands": [
+      { "name": "odoo-bin", "run": "odoo-bin --config=./config/.odoorc" },
+      { "name": "dev", "run": "odoo-bin --config=./config/.odoorc --dev=all" },
+      { "name": "update", "run": "odoo-bin --config=./config/.odoorc -u my_module" }
+    ]
+  }
+]
