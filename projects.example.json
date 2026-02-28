@@ -4,6 +4,7 @@
     "name": "My Odoo",
     "port": 8069,
     "cwd": "/path/to/odoo-project",
+    "git_path": "src",
     "python": "/path/to/.pyenv/versions/my-env/bin/python",
     "logfile": "config/log/odooserver.log",
     "commands": [

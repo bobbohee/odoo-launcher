@@ -188,8 +188,9 @@ class Handler(BaseHTTPRequestHandler):
                 if not running and port and is_port_in_use(port):
                     running = True
 
-                git = get_git_status(p["cwd"])
-                branch = get_git_branch(p["cwd"])
+                git_cwd = os.path.join(p["cwd"], p["git_path"]) if p.get("git_path") else p["cwd"]
+                git = get_git_status(git_cwd)
+                branch = get_git_branch(git_cwd)
                 result.append({
                     "id": p["id"],
                     "name": p["name"],
@@ -208,7 +209,8 @@ class Handler(BaseHTTPRequestHandler):
             projects = load_projects()
             proj = next((p for p in projects if p["id"] == project_id), None)
             if proj:
-                return self._json(get_git_status(proj["cwd"]))
+                git_cwd = os.path.join(proj["cwd"], proj["git_path"]) if proj.get("git_path") else proj["cwd"]
+                return self._json(get_git_status(git_cwd))
             return self._json({"total": 0, "files": []})
 
         m = re.match(r"^/api/projects/([^/]+)/git-diff$", path)
@@ -224,7 +226,8 @@ class Handler(BaseHTTPRequestHandler):
             projects = load_projects()
             proj = next((p for p in projects if p["id"] == project_id), None)
             if proj:
-                return self._json({"diff": get_git_diff(proj["cwd"], filepath, context)})
+                git_cwd = os.path.join(proj["cwd"], proj["git_path"]) if proj.get("git_path") else proj["cwd"]
+                return self._json({"diff": get_git_diff(git_cwd, filepath, context)})
             return self._json({"diff": ""}, 404)
 
         m = re.match(r"^/api/projects/([^/]+)/logs$", path)
