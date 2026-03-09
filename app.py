@@ -194,6 +194,7 @@ class Handler(BaseHTTPRequestHandler):
                 result.append({
                     "id": p["id"],
                     "name": p["name"],
+                    "host": p.get("host", "localhost"),
                     "port": port,
                     "commands": [c["name"] for c in p.get("commands", [])],
                     "running": running,
@@ -632,7 +633,7 @@ function render() {
       <div class="dot ${p.running ? 'on' : 'off'}"></div>
       <div class="info">
         <div class="name">${p.name}${p.git_branch ? `<span class="branch"><i class="fa-solid fa-code-branch" style="margin-right:5px;font-size:10px"></i>${p.git_branch}</span>` : ''}</div>
-        ${p.port ? `<a class="url" href="http://localhost:${p.port}/web" target="_blank" onclick="event.stopPropagation()">localhost:${p.port}</a>` : ''}
+        ${p.port ? `<a class="url" href="http://${p.host}:${p.port}/web" target="_blank" onclick="event.stopPropagation()">${p.host}:${p.port}</a>` : ''}
       </div>
       <div class="actions">
         <select class="mode-select" id="mode-${p.id}"

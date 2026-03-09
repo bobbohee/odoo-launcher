@@ -2,6 +2,7 @@
   {
     "id": "my-odoo",
     "name": "My Odoo",
+    "host": "my-odoo.local",
     "port": 8069,
     "cwd": "/path/to/odoo-project",
     "git_path": "src",
