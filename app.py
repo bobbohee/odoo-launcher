@@ -73,6 +73,15 @@ def resolve_logfile(proj: dict) -> str | None:
     return os.path.join(os.path.expanduser(proj["cwd"]), logfile)
 
 
+def resolve_odoorc(proj: dict) -> str | None:
+    odoorc = proj.get("odoorc")
+    if not odoorc:
+        return None
+    if os.path.isabs(odoorc):
+        return odoorc
+    return os.path.join(os.path.expanduser(proj["cwd"]), odoorc)
+
+
 def get_git_diff(cwd: str, filepath: str, context: int = 3) -> str:
     """Return git diff for a specific file."""
     cwd = os.path.expanduser(cwd)
@@ -403,7 +412,7 @@ HTML = r"""<!DOCTYPE html>
   .content.swapped .log-panel { order: 1; }
 
   /* Cards */
-  .cards { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+  .cards { flex: 1; min-height: 0; min-width: 600px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
   .cards::-webkit-scrollbar { width: 4px; }
   .cards::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 4px; }
   .card {
@@ -418,10 +427,12 @@ HTML = r"""<!DOCTYPE html>
 
   /* Info */
   .info { flex: 1; min-width: 0; }
-  .name { font-size: 16px; font-weight: 600; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; }
-  .branch { font-size: 12px; font-weight: 500; padding: 1px 8px; border-radius: 10px;
-    background: #fef3c7; color: #d97706; }
-  [data-theme="dark"] .branch { background: rgba(240,144,0,.15); color: #fbbf24; }
+  .name { font-size: 16px; font-weight: 600; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .branch { font-family: 'SF Mono', 'Menlo', monospace; font-size: 12px; font-weight: 500; padding: 1px 8px; border-radius: 10px;
+    background: #f0f0f0; color: #6b7280; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 1; min-width: 0; }
+  .branch.dirty { background: #fef3c7; color: #d97706; }
+  [data-theme="dark"] .branch { background: rgba(255,255,255,.08); color: #9ca3af; }
+  [data-theme="dark"] .branch.dirty { background: rgba(240,144,0,.15); color: #fbbf24; }
   .badge { font-size: 11px; font-weight: 600; width: 20px; height: 20px; border-radius: 50%;
     display: inline-flex; align-items: center; justify-content: center;
     background: #fef3c7; color: #d97706; }
@@ -632,7 +643,7 @@ function render() {
     <div class="card" id="card-${p.id}">
       <div class="dot ${p.running ? 'on' : 'off'}"></div>
       <div class="info">
-        <div class="name">${p.name}${p.git_branch ? `<span class="branch"><i class="fa-solid fa-code-branch" style="margin-right:5px;font-size:10px"></i>${p.git_branch}</span>` : ''}</div>
+        <div class="name">${p.name}${p.git_branch ? `<span class="branch${p.git_changes ? ' dirty' : ''}"><i class="fa-solid fa-code-branch" style="margin-right:5px;font-size:10px"></i>${p.git_branch}</span>` : ''}</div>
         ${p.port ? `<a class="url" href="http://${p.host}:${p.port}/web" target="_blank" onclick="event.stopPropagation()">${p.host}:${p.port}</a>` : ''}
       </div>
       <div class="actions">
