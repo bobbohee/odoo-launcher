@@ -700,7 +700,7 @@ function render() {
     <div class="card" id="card-${p.id}">
       <div class="dot ${p.running ? 'on' : 'off'}"></div>
       <div class="info">
-        <div class="name">${p.name}${p.git_branch ? `<span class="branch${p.git_changes ? ' dirty' : ''}"><i class="fa-solid fa-code-branch" style="margin-right:5px;font-size:10px"></i>${p.git_branch}</span>` : ''}</div>
+        <div class="name">${p.name}${p.has_odoorc ? `<span class="odoorc-btn ${activeOdoorcId === p.id ? 'active' : ''}" onclick="event.stopPropagation();openOdoorc('${p.id}','${p.name}')" title=".odoorc"><i class="fa-solid fa-gear"></i></span>` : ''}${p.git_branch ? `<span class="branch${p.git_changes ? ' dirty' : ''}"><i class="fa-solid fa-code-branch" style="margin-right:5px;font-size:10px"></i>${p.git_branch}</span>` : ''}</div>
         ${p.port ? `<a class="url" href="http://${p.host}:${p.port}/web" target="_blank" onclick="event.stopPropagation()">${p.host}:${p.port}</a>` : ''}
       </div>
       <div class="actions">
@@ -764,11 +764,13 @@ function setLoading(id, on) {
 
 let activeLogId = null;
 let activeGitId = null;
+let activeOdoorcId = null;
 
 function clearPanel() {
   clearInterval(logInterval);
   activeLogId = null;
   activeGitId = null;
+  activeOdoorcId = null;
   $('#log-title').textContent = 'Log';
   $('#log-body').textContent = 'Select a project log to view.';
   document.querySelectorAll('.btn.logs').forEach(b => b.classList.remove('active'));
@@ -924,6 +926,61 @@ document.addEventListener('scroll', () => window.scrollTo(0, 0), true);
 document.addEventListener('wheel', e => {
   if (!e.target.closest('.cards, .log-body')) e.preventDefault();
 }, { passive: false });
+
+async function openOdoorc(id, name) {
+  const wasActive = activeOdoorcId === id;
+  clearPanel();
+
+  if (wasActive) {
+    render();
+    return;
+  }
+  activeOdoorcId = id;
+  $('#log-title').textContent = name + ' \u2014 .odoorc';
+  $('#log-body').textContent = 'Loading...';
+  render();
+
+  const res = await fetch(`/api/projects/${id}/odoorc`);
+  const data = await res.json();
+  const content = data.content || '';
+
+  $('#log-body').innerHTML = `<div class="odoorc-editor">
+    <textarea id="odoorc-ta" spellcheck="false">${esc(content)}</textarea>
+    <div class="odoorc-toolbar">
+      <button class="odoorc-save" onclick="saveOdoorc('${esc(id)}')">Save</button>
+      <span class="odoorc-msg" id="odoorc-msg"></span>
+    </div>
+  </div>`;
+}
+
+async function saveOdoorc(id) {
+  const ta = $('#odoorc-ta');
+  const btn = document.querySelector('.odoorc-save');
+  const msg = $('#odoorc-msg');
+  if (!ta || !btn) return;
+  btn.disabled = true;
+  msg.textContent = '';
+  msg.className = 'odoorc-msg';
+
+  try {
+    const res = await fetch(`/api/projects/${id}/odoorc`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({content: ta.value}),
+    });
+    if (res.ok) {
+      msg.textContent = 'Saved!';
+    } else {
+      msg.textContent = 'Save failed';
+      msg.classList.add('error');
+    }
+  } catch (e) {
+    msg.textContent = 'Save failed';
+    msg.classList.add('error');
+  }
+  btn.disabled = false;
+  setTimeout(() => { msg.textContent = ''; }, 2000);
+}
 
 load();
 setInterval(load, 5000);
