@@ -527,6 +527,25 @@ HTML = r"""<!DOCTYPE html>
   .btn.logs.active:hover { background: #c7e2ff; }
   [data-theme="dark"] .btn.logs.active { color: #4dabf7; background: rgba(77,171,247,.15); }
   [data-theme="dark"] .btn.logs.active:hover { background: rgba(77,171,247,.25); }
+  .odoorc-btn { cursor: pointer; color: var(--dim); font-size: 12px; transition: color .15s; flex-shrink: 0; }
+  .odoorc-btn:hover { color: var(--accent); }
+  .odoorc-btn.active { color: var(--accent); }
+  .odoorc-editor { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 12px; }
+  .odoorc-editor textarea {
+    flex: 1; min-height: 0; width: 100%; resize: none; border: 1px solid var(--muted); border-radius: 8px;
+    background: var(--bg); color: var(--text); padding: 14px; font-family: 'SF Mono', 'Menlo', monospace;
+    font-size: 12px; line-height: 1.7; outline: none; transition: border-color .15s;
+  }
+  .odoorc-editor textarea:focus { border-color: var(--accent); }
+  .odoorc-toolbar { display: flex; align-items: center; gap: 10px; }
+  .odoorc-save {
+    padding: 6px 18px; border-radius: 8px; border: none; background: var(--accent); color: #fff;
+    font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity .15s;
+  }
+  .odoorc-save:hover { opacity: .85; }
+  .odoorc-save:disabled { opacity: .5; cursor: not-allowed; }
+  .odoorc-msg { font-size: 12px; color: var(--green); }
+  .odoorc-msg.error { color: var(--red); }
   .btn i { font-size: 13px; }
   .btn.loading i { animation: spin 1.2s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
