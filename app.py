@@ -293,8 +293,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({"status": "command_not_found"}, 404)
 
             cwd = os.path.expanduser(proj["cwd"])
+            odoorc_path = resolve_odoorc(proj) or ""
+            run_cmd = cmd_entry["run"].replace("{odoorc}", odoorc_path)
             port_flag = f" --http-port={proj['port']}" if proj.get("port") else ""
-            full_cmd = f"{proj['python']} {cmd_entry['run']}{port_flag}"
+            full_cmd = f"{proj['python']} {run_cmd}{port_flag}"
 
             proc = subprocess.Popen(
                 full_cmd,

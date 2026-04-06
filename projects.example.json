@@ -6,12 +6,13 @@
     "port": 8069,
     "cwd": "/path/to/odoo-project",
     "git_path": "src",
+    "odoorc": "config/.odoorc",
     "python": "/path/to/.pyenv/versions/my-env/bin/python",
     "logfile": "config/log/odooserver.log",
     "commands": [
-      { "name": "odoo-bin", "run": "odoo-bin --config=./config/.odoorc" },
-      { "name": "dev", "run": "odoo-bin --config=./config/.odoorc --dev=all" },
-      { "name": "update", "run": "odoo-bin --config=./config/.odoorc -u my_module" }
+      { "name": "odoo-bin", "run": "odoo-bin --config={odoorc}" },
+      { "name": "dev", "run": "odoo-bin --config={odoorc} --dev=all" },
+      { "name": "update", "run": "odoo-bin --config={odoorc} -u my_module" }
     ]
   }
 ]
