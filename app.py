@@ -210,6 +210,7 @@ class Handler(BaseHTTPRequestHandler):
                     "running_cmd": running_cmd,
                     "git_changes": git["total"],
                     "git_branch": branch,
+                    "has_odoorc": bool(p.get("odoorc")),
                 })
             return self._json(result)
 
@@ -262,6 +263,21 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({"logs": list(running_procs[project_id]["logs"])})
             return self._json({"logs": []})
 
+        m = re.match(r"^/api/projects/([^/]+)/odoorc$", path)
+        if m:
+            project_id = m.group(1)
+            projects = load_projects()
+            proj = next((p for p in projects if p["id"] == project_id), None)
+            if not proj or not proj.get("odoorc"):
+                return self._json({"error": "not_found"}, 404)
+            filepath = resolve_odoorc(proj)
+            try:
+                with open(filepath, "r", encoding="utf-8") as f:
+                    content = f.read()
+                return self._json({"content": content})
+            except FileNotFoundError:
+                return self._json({"content": ""}, 404)
+
         self.send_error(404)
 
     def do_POST(self):
@@ -274,6 +290,26 @@ class Handler(BaseHTTPRequestHandler):
         m = re.match(r"^/api/projects/([^/]+)/stop$", path)
         if m:
             return self._handle_stop(m.group(1))
+
+        self.send_error(404)
+
+    def do_PUT(self):
+        path = self._parse_path()
+
+        m = re.match(r"^/api/projects/([^/]+)/odoorc$", path)
+        if m:
+            project_id = m.group(1)
+            projects = load_projects()
+            proj = next((p for p in projects if p["id"] == project_id), None)
+            if not proj or not proj.get("odoorc"):
+                return self._json({"error": "not_found"}, 404)
+            filepath = resolve_odoorc(proj)
+            length = int(self.headers.get("Content-Length", 0))
+            body = json.loads(self.rfile.read(length))
+            content = body.get("content", "")
+            with open(filepath, "w", encoding="utf-8") as f:
+                f.write(content)
+            return self._json({"status": "saved"})
 
         self.send_error(404)
 
