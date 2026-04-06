@@ -13,6 +13,10 @@ Odoo Launcher 웹 UI에서 각 프로젝트의 `.odoorc` 설정 파일을 직접
   "id": "my-odoo",
   "name": "My Odoo",
   "odoorc": "config/.odoorc",
+  "commands": [
+    { "name": "odoo-bin", "run": "odoo-bin --config={odoorc}" },
+    { "name": "dev", "run": "odoo-bin --config={odoorc} --dev=all" }
+  ],
   ...
 }
 ```
@@ -20,6 +24,15 @@ Odoo Launcher 웹 UI에서 각 프로젝트의 `.odoorc` 설정 파일을 직접
 - 상대경로는 프로젝트 `cwd` 기준으로 해석한다.
 - 절대경로도 허용한다.
 - `odoorc` 필드가 없는 프로젝트는 편집 버튼을 표시하지 않는다.
+
+### 커맨드 변수 치환
+
+commands의 `run` 문자열에서 `{odoorc}` 플레이스홀더를 `odoorc` 필드의 경로로 치환한다. 이를 통해 `.odoorc` 경로를 한 곳에서만 관리할 수 있다.
+
+- 기존: `"run": "odoo-bin --config=./config/.odoorc"` (경로 중복)
+- 변경: `"run": "odoo-bin --config={odoorc}"` (`odoorc` 필드 참조)
+- `{odoorc}` 플레이스홀더가 없으면 치환 없이 그대로 실행한다.
+- `odoorc` 필드가 없는데 `{odoorc}`를 사용하면 빈 문자열로 치환한다.
 
 ## 백엔드 API
 
