@@ -881,6 +881,7 @@ async function openLog(id, name) {
 
   const fetchLogs = async () => {
     const res = await fetch(`/api/projects/${id}/logs`);
+    if (activeLogId !== id) return;
     const {logs} = await res.json();
     const body = $('#log-body');
     body.textContent = logs.join('\n') || '(no output yet)';
@@ -941,6 +942,7 @@ async function openOdoorc(id, name) {
   render();
 
   const res = await fetch(`/api/projects/${id}/odoorc`);
+  if (activeOdoorcId !== id) return;
   const data = await res.json();
   const content = data.content || '';
 
