@@ -737,28 +737,34 @@ function render() {
 }
 
 async function run(id) {
-  const mode = modes[id] || projects.find(p => p.id === id)?.commands[0] || '';
+  const p = projects.find(p => p.id === id);
+  const mode = modes[id] || p?.commands[0] || '';
   setLoading(id, true);
-  await fetch(`/api/projects/${id}/run/${encodeURIComponent(mode)}`, {method:'POST'});
-  await load();
-  if (activeLogId !== id) {
-    const p = projects.find(p => p.id === id);
-    if (p) openLog(id, p.name);
-  }
+  // Optimistic: mark running immediately
+  if (p) { p.running = true; p.running_cmd = mode; render(); }
+  if (p && activeLogId !== id) openLog(id, p.name);
+  fetch(`/api/projects/${id}/run/${encodeURIComponent(mode)}`, {method:'POST'})
+    .finally(() => load());
 }
 
 async function stop(id) {
+  const p = projects.find(p => p.id === id);
   setLoading(id, true);
-  await fetch(`/api/projects/${id}/stop`, {method:'POST'});
-  await load();
+  // Optimistic: mark stopped immediately
+  if (p) { p.running = false; p.running_cmd = null; render(); }
+  fetch(`/api/projects/${id}/stop`, {method:'POST'})
+    .finally(() => load());
 }
 
 async function restart(id) {
+  const p = projects.find(p => p.id === id);
+  const mode = modes[id] || p?.commands[0] || '';
   setLoading(id, true);
+  // Optimistic: keep running state, just signal busy
+  if (p) { p.running = true; p.running_cmd = mode; render(); }
   await fetch(`/api/projects/${id}/stop`, {method:'POST'});
-  const mode = modes[id] || projects.find(p => p.id === id)?.commands[0] || '';
-  await fetch(`/api/projects/${id}/run/${encodeURIComponent(mode)}`, {method:'POST'});
-  await load();
+  fetch(`/api/projects/${id}/run/${encodeURIComponent(mode)}`, {method:'POST'})
+    .finally(() => load());
 }
 
 function setLoading(id, on) {
