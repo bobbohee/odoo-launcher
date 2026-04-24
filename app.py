@@ -995,8 +995,25 @@ async function saveOdoorc(id) {
   setTimeout(() => { msg.textContent = ''; }, 2000);
 }
 
+// Auto-refresh that pauses during user interaction
+let lastInteractionAt = 0;
+function markInteraction() { lastInteractionAt = Date.now(); }
+
+function shouldSkipPoll() {
+  // Skip if a button was just clicked (avoid clobbering optimistic UI)
+  if (Date.now() - lastInteractionAt < 1500) return true;
+  // Skip if user is editing the .odoorc textarea
+  const ta = document.getElementById('odoorc-ta');
+  if (ta && document.activeElement === ta) return true;
+  return false;
+}
+
+document.addEventListener('click', e => {
+  if (e.target.closest('.btn, .odoorc-btn, .mode-select')) markInteraction();
+}, true);
+
 load();
-setInterval(load, 5000);
+setInterval(() => { if (!shouldSkipPoll()) load(); }, 5000);
 </script>
 </body>
 </html>
