@@ -10,7 +10,8 @@ import subprocess
 import sys
 import threading
 from collections import deque
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from concurrent.futures import ThreadPoolExecutor
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent
@@ -58,7 +59,7 @@ def load_projects() -> list[dict]:
 
 def is_port_in_use(port: int) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.settimeout(0.5)
+        s.settimeout(0.2)
         return s.connect_ex(("127.0.0.1", port)) == 0
 
 
@@ -186,21 +187,22 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/projects":
             projects = load_projects()
-            result = []
-            for p in projects:
+
+            def build(p):
                 pid = p["id"]
                 info = running_procs.get(pid)
                 running = info is not None and info["proc"].poll() is None
                 running_cmd = info["cmd"] if running else None
 
                 port = p.get("port")
+                # Skip port probe if process is already tracked as running
                 if not running and port and is_port_in_use(port):
                     running = True
 
                 git_cwd = os.path.join(p["cwd"], p["git_path"]) if p.get("git_path") else p["cwd"]
                 git = get_git_status(git_cwd)
                 branch = get_git_branch(git_cwd)
-                result.append({
+                return {
                     "id": p["id"],
                     "name": p["name"],
                     "host": p.get("host", "localhost"),
@@ -211,7 +213,10 @@ class Handler(BaseHTTPRequestHandler):
                     "git_changes": git["total"],
                     "git_branch": branch,
                     "has_odoorc": bool(p.get("odoorc")),
-                })
+                }
+
+            with ThreadPoolExecutor(max_workers=max(4, len(projects))) as ex:
+                result = list(ex.map(build, projects))
             return self._json(result)
 
         m = re.match(r"^/api/projects/([^/]+)/git$", path)
@@ -993,7 +998,7 @@ setInterval(load, 5000);
 
 if __name__ == "__main__":
     port = get_launcher_port()
-    server = HTTPServer(("127.0.0.1", port), Handler)
+    server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     print(f"Odoo Launcher running at http://127.0.0.1:{port}")
     try:
         server.serve_forever()
